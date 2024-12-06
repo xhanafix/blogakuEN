@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Blog Post Generator</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --container-bg: white;
+            --text-color: #333;
+            --border-color: #ddd;
+            --input-bg: white;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --container-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --border-color: #404040;
+            --input-bg: #3d3d3d;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            padding: 2rem;
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--container-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px var(--shadow-color);
+        }
+
+        .theme-switch {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1rem;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        #output {
+            background-color: var(--input-bg);
+            border-color: var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            input[type="text"],
+            textarea,
+            select,
+            button {
+                font-size: 0.9rem;
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 2rem;
+        }
+
+        .api-key-section {
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .error {
+            color: #dc3545;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .success {
+            color: #28a745;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .progress-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--border-color);
+            border-top: 5px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .progress-text {
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+
+        .typing-animation::after {
+            content: '...';
+            animation: typing 1.5s infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes typing {
+            0% { content: '.'; }
+            33% { content: '..'; }
+            66% { content: '...'; }
+            100% { content: '.'; }
+        }
+
+        #estimated-time {
+            font-size: 0.8rem;
+            color: var(--text-color);
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        .blog-output {
+            margin-top: 2rem;
+            background: var(--input-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .blog-controls {
+            padding: 1rem;
+            background: var(--container-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+        }
+
+        .blog-content {
+            padding: 2rem;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .blog-content h1 {
+            font-size: 2em;
+            margin: 1.5em 0 0.5em;
+            color: var(--text-color);
+        }
+
+        .blog-content h2 {
+            font-size: 1.5em;
+            margin: 1.2em 0 0.5em;
+            color: var(--text-color);
+        }
+
+        .blog-content h3 {
+            font-size: 1.25em;
+            margin: 1em 0 0.5em;
+            color: var(--text-color);
+        }
+
+        .blog-content h4 {
+            font-size: 1.1em;
+            margin: 0.8em 0 0.5em;
+            color: var(--text-color);
+        }
+
+        .blog-content p {
+            margin-bottom: 1em;
+        }
+
+        .blog-content ul, .blog-content ol {
+            margin: 1em 0;
+            padding-left: 2em;
+        }
+
+        .blog-content li {
+            margin-bottom: 0.5em;
+        }
+
+        .copy-btn, .download-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .copy-btn:hover, .download-btn:hover {
+            background: var(--border-color);
+        }
+
+        .generated-content {
+            margin-top: 1rem;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin-bottom: 0.5rem;
+        }
+
+        ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 0.25rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        strong {
+            font-weight: bold;
+        }
+
+        #estimated-time {
+            margin-top: 1rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .segment-progress {
+            width: 100%;
+            height: 4px;
+            background-color: var(--border-color);
+            margin-top: 1rem;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .segment-progress-bar {
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+        }
+
+        .seo-metadata {
+            background: var(--container-bg);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .seo-metadata h2 {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .seo-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .seo-table th,
+        .seo-table td {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .seo-table th {
+            background: var(--bg-color);
+            font-weight: bold;
+            width: 30%;
+        }
+
+        .seo-table td {
+            background: var(--input-bg);
+        }
+
+        @media (max-width: 768px) {
+            .seo-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+
+        .seo-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .seo-details {
+            margin-top: 1.5rem;
+        }
+
+        .seo-details p {
+            margin-bottom: 0.5rem;
+        }
+
+        .seo-note {
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 0.9rem;
+            font-style: italic;
+            margin-bottom: 1.5rem !important;
+        }
+
+        .seo-details strong {
+            color: var(--text-color);
+        }
+
+        .seo-requirements {
+            color: var(--text-color);
+            opacity: 0.8;
+            font-size: 0.85rem;
+            background: var(--bg-color);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem !important;
+            border-left: 3px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-switch" onclick="toggleTheme()">🌓</button>
+
+    <div class="container">
+        <h1>AI Blog Post Generator</h1>
+        
+        <div class="api-key-section">
+            <div class="input-group">
+                <label for="apiKey">OpenRouter API Key:</label>
+                <input type="text" id="apiKey" placeholder="Enter your API key">
+                <button onclick="saveApiKey()">Save API Key</button>
+                <div id="apiKeyStatus"></div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="topic">Blog Topic:</label>
+            <input type="text" id="topic" placeholder="Enter the blog topic">
+        </div>
+
+        <div class="input-group">
+            <label for="tone">Writing Tone:</label>
+            <select id="tone">
+                <option value="professional">Professional</option>
+                <option value="casual">Casual</option>
+                <option value="humorous">Humorous</option>
+                <option value="technical">Technical</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="targetUrl">Target URL to Outrank (optional):</label>
+            <input type="text" id="targetUrl" placeholder="Enter the URL you want to outrank">
+        </div>
+
+        <div class="input-group">
+            <button onclick="generateBlogPost()">Generate Blog Post</button>
+        </div>
+
+        <div id="output"></div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-spinner"></div>
+            <div class="progress-text">
+                <span class="typing-animation">Generating your blog post</span>
+            </div>
+            <div id="estimated-time">Estimated time: ~30 seconds</div>
+        </div>
+    </div>
+
+    <script>
+        // Theme management
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Enhanced API key management with encryption
+        class ApiKeyManager {
+            static #encryptionKey = 'your-secret-key'; // Change this in production
+
+            static #encrypt(text) {
+                // Simple XOR encryption (use a proper encryption in production)
+                return btoa(text.split('').map((char, index) => 
+                    String.fromCharCode(char.charCodeAt(0) ^ 
+                    this.#encryptionKey.charCodeAt(index % this.#encryptionKey.length))
+                ).join(''));
+            }
+
+            static #decrypt(encrypted) {
+                try {
+                    const text = atob(encrypted);
+                    return text.split('').map((char, index) =>
+                        String.fromCharCode(char.charCodeAt(0) ^ 
+                        this.#encryptionKey.charCodeAt(index % this.#encryptionKey.length))
+                    ).join('');
+                } catch {
+                    return null;
+                }
+            }
+
+            static saveApiKey(apiKey) {
+                const encrypted = this.#encrypt(apiKey);
+                localStorage.setItem('openrouterApiKey', encrypted);
+                sessionStorage.setItem('openrouterApiKey', encrypted);
+            }
+
+            static getApiKey() {
+                const cached = sessionStorage.getItem('openrouterApiKey');
+                if (cached) {
+                    return this.#decrypt(cached);
+                }
+                const stored = localStorage.getItem('openrouterApiKey');
+                if (stored) {
+                    const decrypted = this.#decrypt(stored);
+                    if (decrypted) {
+                        sessionStorage.setItem('openrouterApiKey', stored);
+                    }
+                    return decrypted;
+                }
+                return null;
+            }
+        }
+
+        // Modified window.onload
+        window.onload = function() {
+            // Load theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // Load API key
+            const savedApiKey = ApiKeyManager.getApiKey();
+            if (savedApiKey) {
+                document.getElementById('apiKey').value = savedApiKey;
+                document.getElementById('apiKeyStatus').innerHTML = 
+                    '<span class="success">API key loaded from storage</span>';
+            }
+        }
+
+        // Modified saveApiKey function
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (apiKey) {
+                ApiKeyManager.saveApiKey(apiKey);
+                document.getElementById('apiKeyStatus').innerHTML = 
+                    '<span class="success">API key saved successfully!</span>';
+            } else {
+                document.getElementById('apiKeyStatus').innerHTML = 
+                    '<span class="error">Please enter a valid API key</span>';
+            }
+        }
+
+        // Update the generateSeoMetadata function
+        function generateSeoMetadata(topic) {
+            return {
+                prompt: `As an SEO expert, analyze the topic "${topic}" and provide the following SEO information in JSON format:
+
+1. Focus Keywords: Create an SEO-optimized keyword phrase (maximum 6 words) that best represents the topic.
+
+2. SEO Title: Create an engaging title (maximum 60 characters) that:
+   - Starts with the exact focus keyword
+   - Is compelling and clickable
+   - Includes main benefit or value
+
+3. URL Slug: Create a short SEO-friendly slug (maximum 15 characters) that:
+   - Contains the main keyword
+   - Uses hyphens between words
+   - Is readable and memorable
+
+4. Meta Description: Write an engaging meta description (maximum 155 characters) that:
+   - Naturally includes the focus keyword
+   - Explains main benefit for readers
+   - Contains a clear call to action
+   - Matches search intent
+
+5. Image Alt Text: Create descriptive alt text that:
+   - Represents the main content theme
+   - Describes mood and tone
+   - Naturally includes relevant keywords
+   - Aids accessibility
+
+Response format:
+{
+    "focusKeywords": "your focus keyword phrase",
+    "seoTitle": "your SEO title starting with focus keyword",
+    "urlSlug": "your-slug",
+    "metaDescription": "your meta description with focus keyword and call to action",
+    "imageAltText": "your descriptive alt text representing content theme"
+}
+
+Ensure each field adheres to the character limits and requirements stated above.`,
+                parse: (response) => {
+                    try {
+                        const cleanResponse = response.replace(/```json|```/g, '').trim();
+                        const seoData = JSON.parse(cleanResponse);
+                        
+                        const validations = {
+                            focusKeywords: (text) => text.split(' ').length <= 6,
+                            seoTitle: (text) => text.length <= 60,
+                            urlSlug: (text) => text.length <= 15,
+                            metaDescription: (text) => text.length <= 155,
+                            imageAltText: (text) => text.length > 0
+                        };
+
+                        for (const [field, validator] of Object.entries(validations)) {
+                            if (!seoData[field] || !validator(seoData[field])) {
+                                throw new Error(`Invalid ${field}`);
+                            }
+                        }
+
+                        return seoData;
+                    } catch (error) {
+                        console.error('SEO Metadata parsing error:', error);
+                        return null;
+                    }
+                }
+            };
+        }
+
+        // Update the generateSegment function
+        async function generateSegment(topic, tone, targetUrl, segmentType, previousContent = '') {
+            const contextPrompt = previousContent ? 
+                `Previous content for context: ${previousContent}\n\nContinue the flow from above with: ` : '';
+
+            const segmentPrompts = {
+                seo: generateSeoMetadata(topic).prompt,
+                
+                introduction: `Write an engaging introduction (200-250 words) for a blog post about "${topic}".
+Guidelines:
+- Use a ${tone} tone
+- Include a compelling hook
+- Mention the main points to be covered
+- Format with markdown headings
+- End with a smooth transition to the first main point`,
+                
+                mainContent1: `${contextPrompt}Write the first main section (500-600 words) about "${topic}".
+Guidelines:
+- Use a ${tone} tone
+- Include 2-3 subheadings (using markdown ## and ###)
+- Provide detailed explanations with examples
+- Focus on the first major aspect of the topic
+- End with a transition to the next section`,
+                
+                mainContent2: `${contextPrompt}Write the second main section (500-600 words) about "${topic}".
+Guidelines:
+- Use a ${tone} tone
+- Include 2-3 different subheadings (using markdown ## and ###)
+- Build upon the previous section's content
+- Focus on the second major aspect of the topic
+- Include relevant examples or case studies
+- End with a transition to the next section`,
+                
+                mainContent3: `${contextPrompt}Write the third main section (500-600 words) about "${topic}".
+Guidelines:
+- Use a ${tone} tone
+- Include 2-3 different subheadings (using markdown ## and ###)
+- Connect with previous sections' points
+- Focus on the third major aspect of the topic
+- Include actionable tips or recommendations
+- End with a transition to the conclusion`,
+                
+                conclusion: `${contextPrompt}Write a conclusion (150-200 words) and 5 FAQs about "${topic}".
+Guidelines:
+- Use a ${tone} tone
+- Summarize the main points discussed
+- Include a clear call to action
+- Format the FAQs with markdown headings
+- Ensure FAQs address common reader concerns
+- Make the conclusion impactful and memorable`
+            };
+
+            try {
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${ApiKeyManager.getApiKey()}`,
+                        "HTTP-Referer": window.location.href,
+                        "X-Title": "AI Blog Post Generator",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "model": "google/learnlm-1.5-pro-experimental:free",
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": segmentPrompts[segmentType]
+                            }
+                        ],
+                        "max_tokens": 2000,
+                        "temperature": 0.7
+                    })
+                });
+
+                const data = await response.json();
+                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    throw new Error('Invalid response from API');
+                }
+                return data.choices[0].message.content.trim();
+            } catch (error) {
+                throw new Error(`Failed to generate ${segmentType}: ${error.message}`);
+            }
+        }
+
+        // Update the generateBlogPost function
+        async function generateBlogPost() {
+            const apiKey = ApiKeyManager.getApiKey();
+            if (!apiKey) {
+                document.getElementById('output').innerHTML = 
+                    'Please save your API key first.';
+                return;
+            }
+
+            const topic = document.getElementById('topic').value;
+            const tone = document.getElementById('tone').value;
+            const targetUrl = document.getElementById('targetUrl').value;
+
+            if (!topic) {
+                document.getElementById('output').innerHTML = 
+                    'Please enter a blog topic.';
+                return;
+            }
+
+            const output = document.getElementById('output');
+            const progressContainer = document.getElementById('progressContainer');
+            
+            output.innerHTML = '';
+            progressContainer.style.display = 'block';
+
+            const progressText = progressContainer.querySelector('.progress-text span');
+            const estimatedTime = document.getElementById('estimated-time');
+
+            try {
+                // First, generate SEO metadata
+                progressText.textContent = 'Generating SEO metadata';
+                const seoResponse = await generateSegment(topic, tone, targetUrl, 'seo');
+                let seoMetadata;
+                try {
+                    // Clean the response to ensure it's valid JSON
+                    const cleanResponse = seoResponse.replace(/```json|```/g, '').trim();
+                    seoMetadata = JSON.parse(cleanResponse);
+                    console.log('SEO Metadata:', seoMetadata); // Add this for debugging
+                } catch (error) {
+                    console.error('Failed to parse SEO metadata:', error);
+                    seoMetadata = null;
+                }
+
+                const segmentTypes = ['introduction', 'mainContent1', 'mainContent2', 'mainContent3', 'conclusion'];
+                let segments = [];
+                let previousContent = '';
+
+                for (let i = 0; i < segmentTypes.length; i++) {
+                    progressText.textContent = `Generating ${segmentTypes[i]} (${i + 1}/${segmentTypes.length})`;
+                    currentProgress = ((i + 1) / segmentTypes.length * 100);
+                    estimatedTime.textContent = `Progress: ${currentProgress.toFixed(0)}%`;
+                    
+                    const segment = await generateSegment(topic, tone, targetUrl, segmentTypes[i], previousContent);
+                    if (!segment) {
+                        throw new Error(`Failed to generate ${segmentTypes[i]}`);
+                    }
+                    segments.push(segment);
+                    previousContent = segments.join('\n\n');
+                }
+
+                // Combine and format content
+                const combinedContent = segments.join('\n\n');
+                if (!combinedContent.trim()) {
+                    throw new Error('Generated content is empty');
+                }
+
+                // Format the content with proper HTML structure and SEO metadata
+                let formattedContent = `
+                    <article class="blog-post">
+                        ${combinedContent
+                            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                            .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+                            .replace(/^\* (.*$)/gm, '<ul><li>$1</li></ul>')
+                            .replace(/^\d\. (.*$)/gm, '<ol><li>$1</li></ol>')
+                            .replace(/\n\n/g, '</p><p>')
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
+                        
+                        ${seoMetadata ? `
+                        <div class="seo-section">
+                            <h2>SEO Information</h2>
+                            <div class="seo-details">
+                                <p><strong>1) Focus Keywords:</strong> ${seoMetadata.focusKeywords}</p>
+                                <p class="seo-note">SEO-Friendly Focus Keywords Within 6 Words</p>
+                                <p class="seo-requirements">Requirements: Must be 6 words or less, highly relevant to topic</p>
+                                
+                                <p><strong>2) SEO Title:</strong> ${seoMetadata.seoTitle}</p>
+                                <p class="seo-note">SEO-Friendly Title Within 60 Characters With Focus Keywords at Start</p>
+                                <p class="seo-requirements">Requirements: Must start with focus keyword, be compelling, and under 60 characters</p>
+                                
+                                <p><strong>3) URL Slug:</strong> ${seoMetadata.urlSlug}</p>
+                                <p class="seo-note">SEO-Friendly Slug Within 15 Characters Including Focus Keywords</p>
+                                <p class="seo-requirements">Requirements: Must contain main keyword, use hyphens, under 15 characters</p>
+                                
+                                <p><strong>4) Meta Description:</strong> ${seoMetadata.metaDescription}</p>
+                                <p class="seo-note">SEO-Friendly Meta Description Within 155 Characters Including Focus Keywords</p>
+                                <p class="seo-requirements">Requirements: Must contain focus keyword, have call-to-action, under 155 characters</p>
+                                
+                                <p><strong>5) Image Alt Text:</strong> ${seoMetadata.imageAltText}</p>
+                                <p class="seo-note">Represents Content, Mood, or Theme of Article</p>
+                                <p class="seo-requirements">Requirements: Must describe content theme and mood, naturally include relevant keywords</p>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </article>`;
+
+                // Clean up any empty paragraphs or lists
+                formattedContent = formattedContent
+                    .replace(/<p>\s*<\/p>/g, '')
+                    .replace(/<(ul|ol)>\s*<\/\1>/g, '')
+                    .replace(/>\s+</g, '><')
+                    .trim();
+
+                // Hide progress and show result
+                progressContainer.style.display = 'none';
+                
+                output.innerHTML = `
+                    <div class="blog-output">
+                        <div class="blog-controls">
+                            <button onclick="copyContent()" class="copy-btn">Copy Content</button>
+                            <button onclick="downloadContent()" class="download-btn">Download</button>
+                        </div>
+                        <div class="blog-content">
+                            ${formattedContent}
+                        </div>
+                    </div>`;
+
+            } catch (error) {
+                progressContainer.style.display = 'none';
+                output.innerHTML = `Error: ${error.message}. Please try again.`;
+            }
+        }
+
+        // Add these functions after the generateBlogPost function
+        function copyContent() {
+            const content = document.querySelector('.blog-content').innerText;
+            navigator.clipboard.writeText(content).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy Content';
+                }, 2000);
+            });
+        }
+
+        function downloadContent() {
+            const content = document.querySelector('.blog-content').innerText;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'blog-post.txt';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html> 
