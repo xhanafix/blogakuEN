@@ -89,7 +89,7 @@ SOFTWARE.
 
 ## Contact
 
-Your Name - [@yourtwitter](https://twitter.com/suami_z)
+Your Name - [@suami_z](https://twitter.com/suami_z)
 
 Project Link: [https://xhanafix.github.io/blogakuEN](https://xhanafix.github.io/blogakuEN/)
 ## Acknowledgments
