@@ -1,10 +1,10 @@
 # AI Blog Post Generator
 
-A powerful AI-powered blog post generator that creates SEO-optimized content in Bahasa Malaysia using OpenRouter API. The generator creates comprehensive blog posts with proper structure, headings, and SEO metadata.
+A powerful AI-powered blog post generator that creates SEO-optimized content in English using OpenRouter API. The generator creates comprehensive blog posts with proper structure, headings, and SEO metadata.
 
 ## Features
 
-- Generate complete blog posts in Bahasa Malaysia
+- Generate complete blog posts in English
 - SEO-optimized content structure
 - Customizable writing tone
 - Dark/Light theme support
