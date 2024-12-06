@@ -89,10 +89,9 @@ SOFTWARE.
 
 ## Contact
 
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter)
+Your Name - [@yourtwitter](https://twitter.com/suami_z)
 
-Project Link: [https://github.com/yourusername/ai-blog-post-generator](https://github.com/yourusername/ai-blog-post-generator)
-
+Project Link: [https://xhanafix.github.io/blogakuEN](https://xhanafix.github.io/blogakuEN/)
 ## Acknowledgments
 
 - OpenRouter API
